@@ -29,7 +29,6 @@ class RiotAPICaller:
         puuid = account_data.get("puuid")
         region_mapping = {
             "na1": "americas",
-            "br1": "americas",
             "lan": "americas",
             "las": "americas",
             "kr": "asia",
@@ -69,22 +68,19 @@ class RiotAPICaller:
         """
         account_data = self.get_account_data(region, summoner_name)
         if account_data is None:
+            print("account data is none")
             return None
-        summoner_id = account_data.get("id")
-        api_call = f"https://{region}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/{summoner_id}?api_key={self.api_key}"
-        try:
-            response = requests.get(api_call)
-            if response.status_code != 200:
-                return None
-            top_champions = response.json()
-        except:
-            return None
-        top_champions_sorted = sorted(top_champions, key=lambda x: x["championPoints"], reverse=True)
+        puuid = account_data.get("puuid")
+        api_call = f"https://na1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}/top"
+        
+        data = self.make_api_call(api_call)
+        
         top_3_champions = []
-        for i in range(min(3, len(top_champions_sorted))):
-            champ_name = pld.convert_id_to_name(top_champions_sorted[i]["championId"])  
-            top_3_champions.append(champ_name)
-        return top_3_champions
+        for i in range(3):
+            top_3_champions.append(pld.convert_id_to_name(data[i]["championId"]))
+         
+        return top_3_champions   
+
 
     def get_rank(self, region, summoner_name):
         """
@@ -99,24 +95,14 @@ class RiotAPICaller:
         str: The rank of the given summoner name and region.
         None: If the rank could not be retrieved.
         """
-        api_call = f"https://{region}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{summoner_name}?api_key={self.api_key}"
-        try:
-            response = requests.get(api_call)
-            if response.status_code != 200:
-                return None
-            summoner_data = response.json()
-            summoner_id = summoner_data.get("id")
-            api_call = f"https://{region}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_id}?api_key={self.api_key}"
-            response = requests.get(api_call)
-            if response.status_code != 200:
-                return None
-            rank_data = response.json()
-            for entry in rank_data:
-                if entry["queueType"] == "RANKED_SOLO_5x5":
-                    return f"{entry['tier']} {entry['rank']}"
+        account_data = self.get_account_data(region, summoner_name)
+        if account_data is None:
             return None
-        except:
-            return None
+        id = account_data.get("id")
+        url = f"https://{region}.api.riotgames.com/lol/league/v4/entries/by-summoner/{id}"
+        data = self.make_api_call(url)    
+                
+        return pld.proccess_ranked_data(data)   
 
     def get_match_history_data_from_code(self, code):
         url = f"https://americas.api.riotgames.com/lol/match/v5/matches/{code}"
@@ -178,7 +164,8 @@ class RiotAPICaller:
     def get_league_stats(self, id):
         url = f"https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/{id}"
         data = self.make_api_call(url)
-        return data  
+        return_data = pld.process_ranked_data(data) 
+        return return_data  
     
     def make_api_call(self, url): 
         headers = {"X-Riot-Token": self.api_key}

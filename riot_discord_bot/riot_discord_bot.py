@@ -23,11 +23,8 @@ class RiotDiscordBot(Bot):
 
         @self.bot.command()
         async def hello(ctx):
+            print(f"Message received: {ctx.message.content}")
             await ctx.send('hi!')
-
-            print(args)
-            data = self.RiotCaller.get_account_data(region="na1", summoner_name=args[0])
-            await ctx.send(data)
 
         @self.bot.command()
         async def lol(ctx, *args):
@@ -37,7 +34,10 @@ class RiotDiscordBot(Bot):
                 await ctx.send("No command given. Use lol help for a list of commands.")
                 return
             
-            output = league_handler(riot_api_caller=self.RiotCaller, command=args[0], name=args[1], region=args[2] if len(args) > 2 else None)
+            command = args[0]
+            region = args[1]
+            name = ' '.join(args[2:])
+            output = league_handler(riot_api_caller=self.RiotCaller, command=command, name=name, region=region)
             await ctx.send(output)
             
         @self.bot.command()
