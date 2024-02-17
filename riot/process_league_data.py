@@ -1,7 +1,6 @@
 #File        : proccess_league_data.py
 #Description : This file handles all of the data processing for the league data. This includes getting the champion name, map name, and game mode.  
 import json
-import json
 
 """
 Function    : convert_id_to_name
@@ -61,9 +60,10 @@ def get_mode(queueId) -> str:
 def process_ranked_data(data):
     
     if len(data) == 0:
-        return "Unranked"
+        return {"result": "Unranked"}
 
     # Process each league entry
+    result = {}
     for entry in data:
         league_id = entry["leagueId"]
         queue_type = entry["queueType"]
@@ -79,18 +79,20 @@ def process_ranked_data(data):
         fresh_blood = entry["freshBlood"]
         hot_streak = entry["hotStreak"]
 
-        # Build the string with the extracted data
-        result = f"League ID: {league_id}\n" \
-                 f"Queue Type: {queue_type}\n" \
-                 f"Tier: {tier}\n" \
-                 f"Rank: {rank}\n" \
-                 f"Summoner ID: {summoner_id}\n" \
-                 f"Summoner Name: {summoner_name}\n" \
-                 f"League Points: {league_points}\n" \
-                 f"Wins: {wins}\n" \
-                 f"Losses: {losses}\n" \
-                 f"Veteran: {veteran}\n" \
-                 f"Inactive: {inactive}\n" \
-                 f"Fresh Blood: {fresh_blood}\n" \
-                 f"Hot Streak: {hot_streak}\n\n"    
-        return result
+        # Build the dictionary with the extracted data
+        result[summoner_name] = {
+            "League ID": league_id,
+            "Queue Type": queue_type,
+            "Tier": tier,
+            "Rank": rank,
+            "Summoner ID": summoner_id,
+            "League Points": league_points,
+            "Wins": wins,
+            "Losses": losses,
+            "Veteran": veteran,
+            "Inactive": inactive,
+            "Fresh Blood": fresh_blood,
+            "Hot Streak": hot_streak
+        }
+    
+    return result
